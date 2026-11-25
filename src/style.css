@@ -1,0 +1,520 @@
+/* ==========================================================================
+   Cordillera Rally Festival — Estilos HSL y Tokens Visuales
+   Estética festival de rally andino: Naranjas de carrera, asfalto y neón cian.
+   ========================================================================== */
+
+:root {
+  /* Paleta cromática HSL */
+  --festival-orange: hsl(24, 100%, 50%);
+  --festival-orange-glow: hsl(24, 100%, 58%);
+  --rally-cyan: hsl(186, 100%, 50%);
+  --neon-yellow: hsl(55, 100%, 50%);
+  --asphalt-dark: hsl(220, 24%, 10%);
+  --asphalt-card: hsl(222, 20%, 15%);
+  --mud-brown: hsl(28, 45%, 25%);
+  --text-primary: hsl(0, 0%, 96%);
+  --text-secondary: hsl(215, 15%, 70%);
+
+  /* Efectos */
+  --glass-bg: rgba(15, 23, 42, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-blur: blur(12px);
+  --shadow-hud: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+
+  /* Tipografías */
+  --font-display: 'Rajdhani', sans-serif;
+  --font-body: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--asphalt-dark);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+}
+
+#canvas3d {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 1;
+}
+
+/* ==========================================================================
+   HUD Principal (Capa 2)
+   ========================================================================== */
+#hud-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem;
+}
+
+/* Barra Superior del Festival */
+.hud-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.festival-brand {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-left: 4px solid var(--festival-orange);
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow-hud);
+}
+
+.festival-brand h1 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.festival-brand .badge {
+  font-size: 0.75rem;
+  color: var(--festival-orange);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.hud-event-status {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: var(--shadow-hud);
+}
+
+.hud-event-status .event-name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--rally-cyan);
+  text-transform: uppercase;
+}
+
+.hud-event-status .timer-display {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #fff;
+  margin: 0.2rem 0;
+}
+
+.hud-event-status .checkpoint-pill {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--neon-yellow);
+  background: rgba(255, 234, 0, 0.15);
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+/* Sección Central: Minimapa y Estado Ambiental */
+.hud-right-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.8rem;
+}
+
+.minimap-container {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: var(--shadow-hud);
+  border: 2px solid var(--festival-orange);
+}
+
+#minimap-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.environmental-telemetry {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  text-align: right;
+}
+
+.env-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.env-row .label {
+  color: var(--text-secondary);
+}
+
+.env-row .val {
+  font-weight: 600;
+  color: var(--rally-cyan);
+}
+
+/* Tacómetro y Velocímetro Inferior */
+.hud-bottom-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.hud-controls-hint {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.hud-controls-hint kbd {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+
+.tachometer-cluster {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-bottom: 4px solid var(--festival-orange);
+  padding: 1rem 1.6rem;
+  border-radius: 16px;
+  box-shadow: var(--shadow-hud);
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+}
+
+.gear-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gear-box .label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.gear-box .gear-num {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--festival-orange);
+  line-height: 1;
+}
+
+.speed-box {
+  text-align: right;
+  min-width: 140px;
+}
+
+.speed-box .speed-number {
+  font-family: var(--font-display);
+  font-size: 4rem;
+  font-weight: 900;
+  line-height: 0.9;
+  color: #fff;
+  letter-spacing: -1px;
+}
+
+.speed-box .speed-unit {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.rpm-bar-container {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+#hud-rpm-bar {
+  width: 0%;
+  height: 100%;
+  background-color: var(--rally-cyan);
+  transition: width 0.05s ease-out;
+}
+
+/* ==========================================================================
+   Modales y Menús Interactivos (Capa 3)
+   ========================================================================== */
+.interactive-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8);
+  border-radius: 18px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 760px;
+  z-index: 100;
+  pointer-events: auto;
+  display: none;
+}
+
+.interactive-panel.active {
+  display: block;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.panel-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--festival-orange);
+}
+
+.panel-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+}
+
+.panel-close-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.garage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.vehicle-card {
+  background: var(--asphalt-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vehicle-card:hover, .vehicle-card.selected {
+  border-color: var(--festival-orange);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(255, 85, 0, 0.25);
+}
+
+.vehicle-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: #fff;
+  margin-bottom: 0.3rem;
+}
+
+.vehicle-card .veh-badge {
+  font-size: 0.75rem;
+  color: var(--rally-cyan);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+  display: block;
+}
+
+.vehicle-card .stats-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.3rem;
+}
+
+.vehicle-card .stats-row span:last-child {
+  font-weight: 700;
+  color: #fff;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--festival-orange), var(--festival-orange-glow));
+  color: #fff;
+  border: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  padding: 0.75rem 1.6rem;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-family: var(--font-display);
+  font-weight: 600;
+  padding: 0.75rem 1.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Tabla de clasificación */
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.leaderboard-table th, .leaderboard-table td {
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.leaderboard-table th {
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+}
+
+.leaderboard-table tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Botones flotantes de menú */
+.floating-actions {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  gap: 0.6rem;
+  pointer-events: auto;
+  z-index: 20;
+}
+
+.action-btn {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: var(--shadow-hud);
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  border-color: var(--festival-orange);
+  background: rgba(255, 85, 0, 0.2);
+}
+
+/* Notificación de Carrera Terminada */
+#finish-banner {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, rgba(255, 85, 0, 0.95), rgba(0, 229, 255, 0.9));
+  color: #fff;
+  padding: 1.5rem 3rem;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+  display: none;
+  z-index: 90;
+}
+
+#finish-banner.active {
+  display: block;
+  animation: bannerPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bannerPop {
+  0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  #hud-overlay { padding: 0.8rem; }
+  .festival-brand h1 { font-size: 1.1rem; }
+  .speed-box .speed-number { font-size: 2.8rem; }
+  .minimap-container { width: 100px; height: 100px; }
+}

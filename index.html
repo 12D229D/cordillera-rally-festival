@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cordillera Rally Festival — Carreras de Mundo Abierto Andino</title>
+  <meta name="description" content="Videojuego de carreras de mundo abierto en una región andina ficticia con clima dinámico, física simcade y terreno memoria.">
+
+  <!-- Fuentes tipográficas modernas recomendadas -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <!-- Canvas 3D para renderizado WebGL con Three.js -->
+  <canvas id="canvas3d"></canvas>
+
+  <!-- Botones de Acción Flotantes (Menú Superior Derecho) -->
+  <aside class="floating-actions" aria-label="Menú del Festival">
+    <button id="btn-toggle-garage" class="action-btn" title="Elegir y personalizar coche">🚗 Garaje Festival</button>
+    <button id="btn-toggle-leaderboard" class="action-btn" title="Tabla de tiempos y clasificación">🏆 Tiempos</button>
+    <button id="btn-toggle-route-editor" class="action-btn" title="Crear y compartir rutas">🛠️ Editor de Rutas</button>
+  </aside>
+
+  <!-- Interfaz de Telemetría y HUD Deportivo -->
+  <main id="hud-overlay">
+    <!-- Barra Superior -->
+    <header class="hud-top-bar">
+      <div class="festival-brand">
+        <h1>Cordillera Rally Festival</h1>
+        <span class="badge">TEMPORADA 1 — HORIZONTE ANDINO</span>
+      </div>
+
+      <section class="hud-event-status" aria-label="Estado de la carrera">
+        <div id="current-event-name" class="event-name">Contrarreloj del Cóndor</div>
+        <div id="hud-timer" class="timer-display">00:00.000</div>
+        <span id="hud-checkpoint-text" class="checkpoint-pill">MODO LIBRE</span>
+      </section>
+
+      <section class="hud-right-panel" aria-label="Minimapa y Entorno">
+        <div class="minimap-container">
+          <canvas id="minimap-canvas" width="140" height="140"></canvas>
+        </div>
+        <div class="environmental-telemetry">
+          <div class="env-row"><span class="label">Suelo:</span> <span id="hud-surface-badge" class="val">ASFALTO</span></div>
+          <div class="env-row"><span class="label">Erosión:</span> <span id="hud-erosion-val" class="val">0%</span></div>
+          <div class="env-row"><span class="label">Clima:</span> <span id="hud-weather-badge" class="val">Soleado</span></div>
+        </div>
+      </section>
+    </header>
+
+    <!-- Notificación emergente al finalizar evento -->
+    <div id="finish-banner" role="alert">
+      <h2>¡CARRERA FINALIZADA!</h2>
+      <p style="font-size: 1.1rem; margin-top: 0.4rem;">Tiempo Oficial: <strong id="finish-final-time">--:--:---</strong></p>
+      <p style="font-size: 0.85rem; opacity: 0.9; margin-top: 0.3rem;">¡Reputación del Festival aumentada +100 PTS!</p>
+    </div>
+
+    <!-- Barra Inferior (Tacómetro + Ayudas) -->
+    <footer class="hud-bottom-bar">
+      <div class="hud-controls-hint">
+        <div><kbd>W</kbd> / <kbd>↑</kbd> Acelerar &bull; <kbd>S</kbd> / <kbd>↓</kbd> Freno &bull; <kbd>A</kbd><kbd>D</kbd> Girar</div>
+        <div><kbd>ESPACIO</kbd> Freno de Mano (Drift) &bull; <kbd>R</kbd> Reposicionar Coche</div>
+        <div style="margin-top: 0.4rem; display: flex; gap: 0.5rem; align-items: center;">
+          <select id="event-select-dropdown" style="background: rgba(0,0,0,0.6); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 0.3rem 0.5rem; border-radius: 4px; font-family: var(--font-display);">
+            <option value="0">1. Contrarreloj del Cóndor (Asfalto)</option>
+            <option value="1">2. Subida al Páramo (Niebla / Mixto)</option>
+            <option value="2">3. Festival Mud Sprint (Lluvia / Lodo)</option>
+          </select>
+          <button id="btn-start-race" class="btn-primary" style="padding: 0.35rem 0.8rem; font-size: 0.85rem;">Iniciar Carrera</button>
+        </div>
+      </div>
+
+      <!-- Tacómetro Digital y Analógico -->
+      <section class="tachometer-cluster" aria-label="Tacómetro y Velocímetro">
+        <div class="gear-box">
+          <span class="label">MARCHA</span>
+          <span id="hud-gear" class="gear-num">1</span>
+        </div>
+        <div class="speed-box">
+          <div class="speed-number" id="hud-speed">0</div>
+          <div class="speed-unit">KM/H</div>
+          <div class="rpm-bar-container">
+            <div id="hud-rpm-bar"></div>
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;"><span id="hud-rpm-text">950</span> RPM</div>
+        </div>
+      </section>
+    </footer>
+  </main>
+
+  <!-- Modal: Garaje del Festival (Selector de Vehículos Ficticios) -->
+  <dialog id="panel-garage" class="interactive-panel" aria-labelledby="garage-title">
+    <div class="panel-header">
+      <h2 id="garage-title">Paddock & Garaje del Festival</h2>
+      <button id="btn-close-garage" class="panel-close-btn" aria-label="Cerrar">&times;</button>
+    </div>
+    <div id="garage-cards-container" class="garage-grid">
+      <!-- Inyectado dinámicamente por main.js -->
+    </div>
+  </dialog>
+
+  <!-- Modal: Clasificaciones (Leaderboard) -->
+  <dialog id="panel-leaderboard" class="interactive-panel" aria-labelledby="leaderboard-title">
+    <div class="panel-header">
+      <h2 id="leaderboard-title">Tiempos Oficiales del Festival</h2>
+      <button id="btn-close-leaderboard" class="panel-close-btn" aria-label="Cerrar">&times;</button>
+    </div>
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Pos</th>
+          <th>Piloto</th>
+          <th>Coche</th>
+          <th>Tiempo</th>
+          <th>Condición</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-tbody">
+        <!-- Inyectado dinámicamente -->
+      </tbody>
+    </table>
+  </dialog>
+
+  <!-- Modal: Editor y Compartición de Rutas Comunitarias -->
+  <dialog id="panel-route-editor" class="interactive-panel" aria-labelledby="route-editor-title">
+    <div class="panel-header">
+      <h2 id="route-editor-title">Creador de Rutas Comunitarias</h2>
+      <button id="btn-close-route-editor" class="panel-close-btn" aria-label="Cerrar">&times;</button>
+    </div>
+    <div style="margin-bottom: 1.2rem; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;">
+      Conduce libremente por los valles y cordilleras andinas. Pulsa <strong>Colocar Checkpoint</strong> para ir trazando las puertas de tu carrera en vivo. Al terminar, obtendrás un código Base64 para retar a tus amigos.
+    </div>
+    <div style="display: flex; gap: 0.8rem; align-items: center; margin-bottom: 1.2rem;">
+      <button id="btn-rec-checkpoint" class="btn-primary">Iniciar Grabación</button>
+      <button id="btn-save-route" class="btn-secondary">Finalizar y Guardar Trazado</button>
+      <span id="route-editor-status" style="font-weight: 700; color: var(--rally-cyan);"></span>
+    </div>
+
+    <div style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+      <h3 style="font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 0.5rem; color: #fff;">Código para Compartir Ruta:</h3>
+      <input type="text" id="route-share-code" readonly placeholder="El código aparecerá aquí al finalizar..." style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); color: #00e5ff; font-family: monospace; border-radius: 6px;">
+
+      <h3 style="font-family: var(--font-display); font-size: 1.1rem; margin-top: 1rem; margin-bottom: 0.5rem; color: #fff;">Cargar Ruta por Código Base64:</h3>
+      <div style="display: flex; gap: 0.5rem;">
+        <input type="text" id="route-import-input" placeholder="Pega aquí el código Base64 de la ruta..." style="flex: 1; padding: 0.6rem; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); color: #fff; font-family: monospace; border-radius: 6px;">
+        <button id="btn-load-share-code" class="btn-primary" style="padding: 0.6rem 1.2rem;">Cargar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Módulo Principal ES2024 -->
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
